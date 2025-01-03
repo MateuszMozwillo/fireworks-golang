@@ -11,7 +11,7 @@ import (
 const SCREEN_WIDTH = 100
 const SCREEN_HEIGHT = 50
 
-const GRAVITY = 0.02
+const GRAVITY = 0.01
 
 var sizeChars = [11]string{" ", ".", "-", "=", "+", "*", "o", "O", "0", "@", "#"}
 
@@ -29,14 +29,16 @@ type Pixel struct {
 var screen [SCREEN_HEIGHT][SCREEN_WIDTH]Pixel
 
 type Particle struct {
-	posX              float64
-	posY              float64
-	velX              float64
-	velY              float64
-	decayRate         float64
-	childrenDecayRate float64
-	colorDecayRate    Color
-	pixel             Pixel
+	posX                 float64
+	posY                 float64
+	velX                 float64
+	velY                 float64
+	decayRate            float64
+	childrenDecayRate    float64
+	colorDecayRate       Color
+	pixel                Pixel
+	hasExplodingChildren bool
+	didExplode           bool
 }
 
 type Firework struct {
@@ -47,6 +49,7 @@ type Firework struct {
 	particleVelocitySpread float64
 	particleColor          Color
 	particleDecayRate      Color
+	hasExplodingChildren   bool
 }
 
 func (f Firework) Spawn() {
@@ -58,8 +61,10 @@ func (f Firework) Spawn() {
 			velX:      math.Cos(angle+(rand.Float64()*f.particleVelocitySpread)) * f.particleVelocity,
 			velY:      math.Sin(angle+(rand.Float64()*f.particleVelocitySpread)) * f.particleVelocity,
 			decayRate: 0.02, childrenDecayRate: 0.04,
-			colorDecayRate: f.particleDecayRate,
-			pixel:          Pixel{size: .9, color: f.particleColor},
+			colorDecayRate:       f.particleDecayRate,
+			pixel:                Pixel{size: .9, color: f.particleColor},
+			hasExplodingChildren: f.hasExplodingChildren,
+			didExplode:           false,
 		}
 		particles = append(particles, newParticle)
 	}
@@ -92,10 +97,26 @@ func (p *Particle) Update() {
 		newParticle.decayRate = p.childrenDecayRate
 		childrenParticles = append(childrenParticles, newParticle)
 	}
+	if p.hasExplodingChildren && int(math.Round(p.pixel.size*10.)) == 2 && !p.didExplode {
+		p.didExplode = true
+		colorRandIndex1 := rand.Int() % 3
+		firework := Firework{
+			posX:                   p.posX,
+			posY:                   p.posY,
+			particleCount:          10,
+			particleVelocity:       .4,
+			particleVelocitySpread: .5,
+			particleColor:          possibleColors[colorRandIndex1],
+			particleDecayRate:      possibleDecayRates[colorRandIndex1],
+			hasExplodingChildren:   false,
+		}
+		firework.Spawn()
+	}
 }
 
 func DrawScreen() {
-	toPrint := ""
+	// sets cursor to 0, 0
+	toPrint := "\033[0;0H"
 	for i := 0; i < SCREEN_HEIGHT; i++ {
 		for j := 0; j < SCREEN_WIDTH; j++ {
 
@@ -109,7 +130,12 @@ func DrawScreen() {
 			// if i == 0 || i == SCREEN_HEIGHT-1 || j == 0 || j == SCREEN_WIDTH-1 {
 			// 	char = "#"
 			// }
+
 			toPrint += fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s", screen[i][j].color.r, screen[i][j].color.g, screen[i][j].color.b, char)
+			// toPrint += "\x1b[38;2;" +
+			// 	string(screen[i][j].color.r) + ";" +
+			// 	string(screen[i][j].color.g) + ";" +
+			// 	string(screen[i][j].color.b) + "m" + char
 			// toPrint += char
 		}
 		toPrint += "\n"
@@ -130,29 +156,13 @@ func ClearScreen() {
 var particles = []Particle{}
 var childrenParticles = []Particle{}
 
-var possiblePositionsX = []int{}
-var possiblePositionsY = []int{}
+var possiblePositionsX = []int{75, 50, 25}
+var possiblePositionsY = []int{25, 40, 10}
 
-var possibleColors = []Color{}
-var possibleDecayRates = []Color{}
+var possibleColors = []Color{{255, 255, 0}, {255, 0, 255}, {0, 255, 255}}
+var possibleDecayRates = []Color{{10, 0, 0}, {0, 0, 10}, {0, 10, 0}}
 
 func main() {
-
-	possiblePositionsX = append(possiblePositionsX, 75)
-	possiblePositionsX = append(possiblePositionsX, 50)
-	possiblePositionsX = append(possiblePositionsX, 25)
-
-	possiblePositionsY = append(possiblePositionsY, 25)
-	possiblePositionsY = append(possiblePositionsY, 40)
-	possiblePositionsY = append(possiblePositionsY, 10)
-
-	possibleColors = append(possibleColors, Color{255, 255, 0})
-	possibleColors = append(possibleColors, Color{255, 0, 255})
-	possibleColors = append(possibleColors, Color{0, 255, 255})
-
-	possibleDecayRates = append(possibleDecayRates, Color{10, 0, 0})
-	possibleDecayRates = append(possibleDecayRates, Color{0, 0, 10})
-	possibleDecayRates = append(possibleDecayRates, Color{0, 10, 0})
 	ClearScreen()
 
 	cmd := exec.Command("cmd", "/c", "cls")
@@ -165,30 +175,81 @@ func main() {
 	running := true
 	frame := 0
 
+	posXRandIndex := rand.Int() % 3
+	posYRandIndex := rand.Int() % 3
+	colorRandIndex1 := rand.Int() % 3
+	colorRandIndex2 := rand.Int() % 3
+
+	posXRandIndex = 1
+	posYRandIndex = 0
+
+	randPosX := rand.Int() % 5
+	randPosY := rand.Int() % 5
+
+	firework := Firework{
+		posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
+		posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
+		particleCount:          10,
+		particleVelocity:       .75,
+		particleVelocitySpread: .5,
+		particleColor:          possibleColors[colorRandIndex1],
+		particleDecayRate:      possibleDecayRates[colorRandIndex1],
+		hasExplodingChildren:   true,
+	}
+	firework.Spawn()
+
+	firework2 := Firework{
+		posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
+		posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
+		particleCount:          10,
+		particleVelocity:       .5,
+		particleVelocitySpread: .5,
+		particleColor:          possibleColors[colorRandIndex2],
+		particleDecayRate:      possibleDecayRates[colorRandIndex2],
+		hasExplodingChildren:   false,
+	}
+	firework2.Spawn()
+
 	for running {
 		frame += 1
 		fmt.Print(frame)
 		ClearScreen()
 
-		if frame%15 == 0 {
+		if frame%25 == 0 && frame > 50 {
 			posXRandIndex := rand.Int() % 3
 			posYRandIndex := rand.Int() % 3
-			colorRandIndex := rand.Int() % 3
+			colorRandIndex1 := rand.Int() % 3
+			colorRandIndex2 := rand.Int() % 3
+
+			randPosX := rand.Int() % 5
+			randPosY := rand.Int() % 5
 
 			firework := Firework{
-				posX:                   float64(possiblePositionsX[posXRandIndex] + rand.Int()%5),
-				posY:                   float64(possiblePositionsY[posYRandIndex] + rand.Int()%5),
+				posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
+				posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
 				particleCount:          10,
-				particleVelocity:       1.,
+				particleVelocity:       .75,
 				particleVelocitySpread: .5,
-				particleColor:          possibleColors[colorRandIndex],
-				particleDecayRate:      possibleDecayRates[colorRandIndex],
+				particleColor:          possibleColors[colorRandIndex1],
+				particleDecayRate:      possibleDecayRates[colorRandIndex1],
+				hasExplodingChildren:   false,
 			}
 			firework.Spawn()
+
+			firework2 := Firework{
+				posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
+				posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
+				particleCount:          10,
+				particleVelocity:       .5,
+				particleVelocitySpread: .5,
+				particleColor:          possibleColors[colorRandIndex2],
+				particleDecayRate:      possibleDecayRates[colorRandIndex2],
+				hasExplodingChildren:   false,
+			}
+			firework2.Spawn()
 		}
 
 		//set cursor pos to 0, 0
-		fmt.Printf("\033[%d;%dH", 0, 0)
 
 		for i := 0; i < len(particles); i++ {
 			particles[i].Update()
