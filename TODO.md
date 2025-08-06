@@ -1,1 +1,1 @@
-[ ] remove particels after time / when out of bounds
+[ ] remove particels when invisible / out of bounds
