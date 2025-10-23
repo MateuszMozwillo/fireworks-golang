@@ -3,5 +3,5 @@
 </p>
 
 <p align="center">
-  *Tested on macos and linux terminal may not work on windows
+  *Tested on macos and linux may not work on windows
 </p>
