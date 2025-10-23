@@ -165,7 +165,7 @@ var possibleDecayRates = []Color{{10, 0, 0}, {0, 0, 10}, {0, 10, 0}}
 func main() {
 	ClearScreen()
 
-	cmd := exec.Command("cmd", "/c", "cls")
+	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 
