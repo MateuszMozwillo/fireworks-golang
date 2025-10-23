@@ -264,23 +264,24 @@ func main() {
 		for i := 0; i < len(childrenParticles); i++ {
 			childrenParticles[i].Draw()
 		}
+
 		DrawScreen()
+
 		aliveParticles := []Particle{}
 		for i := 0; i < len(particles); i++ {
 			if particles[i].pixel.size > 0 {
 				aliveParticles = append(aliveParticles, particles[i])
 			}
 		}
-		particles = aliveParticles // Replace old slice with the filtered one
+		particles = aliveParticles
 
-		// --- Filter children particles ---
 		aliveChildren := []Particle{}
 		for i := 0; i < len(childrenParticles); i++ {
 			if childrenParticles[i].pixel.size > 0 {
 				aliveChildren = append(aliveChildren, childrenParticles[i])
 			}
 		}
-		childrenParticles = aliveChildren // Replace old slice
+		childrenParticles = aliveChildren
 	}
 
 	//makes cursor visible
