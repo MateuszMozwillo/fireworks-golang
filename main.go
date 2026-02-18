@@ -83,9 +83,9 @@ func (f Firework) Spawn() {
 
 		newParticle := Particle{
 			posX: f.posX, posY: f.posY,
-			velX:                 math.Cos(angle+(rand.Float64()*f.particleVelocitySpread)) * f.particleVelocity,
-			velY:                 math.Sin(angle+(rand.Float64()*f.particleVelocitySpread)) * f.particleVelocity,
-			decayRate:            0.02,
+			velX:                 math.Cos(angle+(rand.Float64()*f.particleVelocitySpread)) * f.particleVelocity * rand.Float64() * 1.5,
+			velY:                 math.Sin(angle+(rand.Float64()*f.particleVelocitySpread)) * f.particleVelocity * rand.Float64(),
+			decayRate:            0.03,
 			colorDecayRate:       f.particleDecayRate,
 			pixel:                Pixel{size: .9, color: particleClr},
 			hasExplodingChildren: f.hasExplodingChildren,
@@ -106,16 +106,18 @@ func (p Particle) Draw() {
 func (p *Particle) Update() {
 	p.posX += p.velX
 	p.posY += p.velY
+	p.velX *= 0.8
+	p.velY *= 0.8
 	p.velY += GRAVITY
 	p.pixel.size -= p.decayRate
 	if p.hasExplodingChildren && int(math.Round(p.pixel.size*10.)) == 2 && !p.didExplode {
 		p.didExplode = true
-		colorRandIndex1 := rand.Int() % 3
+		colorRandIndex1 := rand.Int() % 6
 		firework := Firework{
 			posX:                   p.posX,
 			posY:                   p.posY,
-			particleCount:          10,
-			particleVelocity:       .4,
+			particleCount:          30,
+			particleVelocity:       1.4,
 			particleVelocitySpread: .5,
 			particleColor:          possibleColors[colorRandIndex1],
 			particleDecayRate:      possibleDecayRates[colorRandIndex1],
@@ -176,7 +178,7 @@ var possiblePositionsX = []int{75, 50, 25}
 var possiblePositionsY = []int{25, 40, 10}
 
 var possibleColors = []Color{{255, 255, 0}, {255, 0, 255}, {0, 255, 255}, {255, 0, 0}, {0, 255, 0}, {0, 0, 255}}
-var possibleDecayRates = []Color{{10, 0, 0}, {0, 0, 10}, {0, 10, 0}, {10, 0, 0}, {0, 10, 0}, {0, 0, 10}}
+var possibleDecayRates = []Color{{20, 0, 0}, {0, 0, 20}, {0, 20, 0}, {20, 0, 0}, {0, 20, 0}, {0, 0, 20}}
 
 func main() {
 	ClearScreen()
@@ -193,7 +195,6 @@ func main() {
 	posXRandIndex := rand.Int() % 3
 	posYRandIndex := rand.Int() % 3
 	colorRandIndex1 := rand.Int() % 6
-	colorRandIndex2 := rand.Int() % 6
 
 	posXRandIndex = 1
 	posYRandIndex = 0
@@ -207,26 +208,14 @@ func main() {
 	firework := Firework{
 		posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
 		posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
-		particleCount:          10,
-		particleVelocity:       .75,
+		particleCount:          20,
+		particleVelocity:       5.75,
 		particleVelocitySpread: .5,
 		particleColor:          possibleColors[colorRandIndex1],
 		particleDecayRate:      possibleDecayRates[colorRandIndex1],
 		hasExplodingChildren:   true,
 	}
 	firework.Spawn()
-
-	firework2 := Firework{
-		posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
-		posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
-		particleCount:          10,
-		particleVelocity:       .5,
-		particleVelocitySpread: .5,
-		particleColor:          possibleColors[colorRandIndex2],
-		particleDecayRate:      possibleDecayRates[colorRandIndex2],
-		hasExplodingChildren:   false,
-	}
-	firework2.Spawn()
 
 	for range ticker.C {
 		frame += 1
@@ -245,9 +234,9 @@ func main() {
 			firework := Firework{
 				posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
 				posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
-				particleCount:          20,
-				particleVelocity:       .75,
-				particleVelocitySpread: .5,
+				particleCount:          100,
+				particleVelocity:       4.75,
+				particleVelocitySpread: .75,
 				particleColor:          possibleColors[colorRandIndex1],
 				particleDecayRate:      possibleDecayRates[colorRandIndex1],
 				hasExplodingChildren:   false,
@@ -257,9 +246,9 @@ func main() {
 			firework2 := Firework{
 				posX:                   float64(possiblePositionsX[posXRandIndex] + randPosX),
 				posY:                   float64(possiblePositionsY[posYRandIndex] + randPosY),
-				particleCount:          20,
-				particleVelocity:       .5,
-				particleVelocitySpread: .5,
+				particleCount:          50,
+				particleVelocity:       2.9,
+				particleVelocitySpread: .9,
 				particleColor:          possibleColors[colorRandIndex2],
 				particleDecayRate:      possibleDecayRates[colorRandIndex2],
 				hasExplodingChildren:   false,
