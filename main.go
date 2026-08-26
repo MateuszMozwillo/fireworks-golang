@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -128,11 +129,13 @@ func (p *Particle) Update() {
 }
 
 func DrawScreen() {
-	// sets cursor to 0, 0
-	toPrint := "\033[0;0H"
+	var sb strings.Builder
+	sb.Grow(SCREEN_WIDTH * SCREEN_HEIGHT * 25)
+
+	sb.WriteString("\033[0;0H")
+
 	for i := 0; i < SCREEN_HEIGHT; i++ {
 		for j := 0; j < SCREEN_WIDTH; j++ {
-
 			char := "#"
 			size := screen[i][j].size
 			if size <= 0. {
@@ -141,11 +144,16 @@ func DrawScreen() {
 				char = sizeChars[int(math.Round(size*10.))]
 			}
 
-			toPrint += fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s", uint8(screen[i][j].color.r), uint8(screen[i][j].color.g), uint8(screen[i][j].color.b), char)
+			fmt.Fprintf(&sb, "\x1b[38;2;%d;%d;%dm%s",
+				uint8(screen[i][j].color.r),
+				uint8(screen[i][j].color.g),
+				uint8(screen[i][j].color.b),
+				char)
 		}
-		toPrint += "\n"
+		sb.WriteString("\n")
 	}
-	fmt.Print(toPrint)
+
+	fmt.Print(sb.String())
 }
 
 func ClearScreen() {
